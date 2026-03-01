@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import "./App.css";
 
 interface Message {
@@ -54,6 +54,12 @@ function App() {
   const [showTranscript, setShowTranscript] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  // メッセージが追加されたら自動スクロール
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const speakText = (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
@@ -187,6 +193,7 @@ function App() {
                   )}
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
           )}
         </div>
