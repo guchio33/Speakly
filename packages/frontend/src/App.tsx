@@ -51,6 +51,7 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const speakText = (text: string) => {
@@ -62,6 +63,7 @@ function App() {
 
   const processUserInput = async (userText: string) => {
     setIsProcessing(true);
+    setError(null);
 
     try {
       // ユーザーメッセージを追加
@@ -74,20 +76,21 @@ function App() {
         body: JSON.stringify({ message: userText }),
       });
 
+      const data = await chatResponse.json();
+
       if (!chatResponse.ok) {
-        throw new Error("Chat failed");
+        throw new Error(data.error || "Chat failed");
       }
 
-      const { reply } = await chatResponse.json();
-
       // AIメッセージを追加
-      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
 
       // AIの返答を音声で読み上げ (Web Speech API)
-      speakText(reply);
-    } catch (error) {
-      console.error("Processing error:", error);
-      alert("エラーが発生しました。もう一度お試しください。");
+      speakText(data.reply);
+    } catch (err) {
+      console.error("Processing error:", err);
+      const errorMessage = err instanceof Error ? err.message : "エラーが発生しました";
+      setError(errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -141,6 +144,12 @@ function App() {
       </header>
 
       <main className="main">
+        {error && (
+          <div className="error-message">
+            <span>{error}</span>
+            <button onClick={() => setError(null)}>×</button>
+          </div>
+        )}
         <div className="conversation">
           {messages.length === 0 ? (
             <div className="empty-state">
