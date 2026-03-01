@@ -22,6 +22,34 @@
   font-size: 0.9rem;
 }
 
+.difficulty-selector {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.difficulty-btn {
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.difficulty-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.difficulty-btn.active {
+  background: white;
+  color: #667eea;
+  font-weight: bold;
+}
+
 .main {
   padding: 20px;
 }

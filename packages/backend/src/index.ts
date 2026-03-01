@@ -49,15 +49,46 @@ if (!apiKey) {
 }
 
 const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
-  systemInstruction: `You are a helpful English conversation partner. Help the user practice English conversation. Keep your responses concise and natural.
+
+// 難易度別のプロンプト設定
+const DIFFICULTY_PROMPTS: Record<string, string> = {
+  elementary: `You are a friendly English teacher for Japanese elementary school students (ages 6-12).
+Use very simple vocabulary (about 300-500 words).
+Use only basic sentence patterns like "I am...", "This is...", "I like...".
+Keep sentences very short (5-8 words maximum).
+Use present tense only.
+Avoid idioms and complex grammar.`,
+
+  junior: `You are a helpful English conversation partner for Japanese junior high school students (ages 12-15).
+Use vocabulary appropriate for EIKEN Grade 3-4 level (about 1,200 words).
+Use simple past tense, future tense, and basic conjunctions.
+Keep sentences relatively short (10-15 words).
+You can use simple phrasal verbs and common expressions.`,
+
+  high: `You are an English conversation partner for Japanese high school students (ages 15-18).
+Use vocabulary appropriate for EIKEN Grade 2-Pre2 level (about 3,000-4,000 words).
+Use various tenses, conditionals, and relative clauses.
+Sentences can be moderate length (15-20 words).
+You can use common idioms and phrasal verbs.`,
+
+  adult: `You are a native English conversation partner for adult learners.
+Use natural, everyday English with full vocabulary range.
+Use all grammatical structures naturally.
+Include idioms, phrasal verbs, and colloquial expressions.
+Speak as you would to a native speaker, but clearly.`,
+};
+
+const getSystemPrompt = (difficulty: string) => {
+  const difficultyPrompt = DIFFICULTY_PROMPTS[difficulty] || DIFFICULTY_PROMPTS.junior;
+  return `${difficultyPrompt}
+
+Help the user practice English conversation. Keep your responses concise and natural.
 
 IMPORTANT: Always respond in the following JSON format:
 {"english": "Your English response here", "japanese": "日本語訳をここに"}
 
-Only output valid JSON, nothing else.`,
-});
+Only output valid JSON, nothing else.`;
+};
 
 app.get("/", (c) => {
   return c.json({ message: "Speakly API" });
@@ -77,7 +108,10 @@ app.post("/api/chat", async (c) => {
       );
     }
 
-    const { message } = await c.req.json<{ message: string }>();
+    const { message, difficulty } = await c.req.json<{
+      message: string;
+      difficulty?: string;
+    }>();
 
     if (!message) {
       return c.json({ error: "Message is required" }, 400);
@@ -92,6 +126,12 @@ app.post("/api/chat", async (c) => {
         400
       );
     }
+
+    // 難易度に応じたモデルを作成
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      systemInstruction: getSystemPrompt(difficulty || "junior"),
+    });
 
     const result = await model.generateContent(message);
     const responseText = result.response.text();

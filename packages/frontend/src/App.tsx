@@ -9,6 +9,15 @@ interface Message {
 
 const API_BASE = "http://localhost:3001";
 
+type DifficultyLevel = "elementary" | "junior" | "high" | "adult";
+
+const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
+  elementary: "小学生",
+  junior: "中学生",
+  high: "高校生",
+  adult: "大人",
+};
+
 // Web Speech API の型定義
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
@@ -53,6 +62,7 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>("junior");
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -80,7 +90,7 @@ function App() {
       const chatResponse = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userText }),
+        body: JSON.stringify({ message: userText, difficulty }),
       });
 
       const data = await chatResponse.json();
@@ -151,6 +161,17 @@ function App() {
       <header className="header">
         <h1>Speakly</h1>
         <p>AI English Conversation Partner</p>
+        <div className="difficulty-selector">
+          {(Object.keys(DIFFICULTY_LABELS) as DifficultyLevel[]).map((level) => (
+            <button
+              key={level}
+              className={`difficulty-btn ${difficulty === level ? "active" : ""}`}
+              onClick={() => setDifficulty(level)}
+            >
+              {DIFFICULTY_LABELS[level]}
+            </button>
+          ))}
+        </div>
       </header>
 
       <main className="main">
