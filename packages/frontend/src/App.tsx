@@ -18,6 +18,14 @@ const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
   adult: "大人",
 };
 
+type SpeechSpeed = "slow" | "normal" | "fast";
+
+const SPEED_SETTINGS: Record<SpeechSpeed, { rate: number; label: string }> = {
+  slow: { rate: 0.6, label: "ゆっくり" },
+  normal: { rate: 0.9, label: "普通" },
+  fast: { rate: 1.2, label: "速い" },
+};
+
 // Web Speech API の型定義
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
@@ -63,6 +71,7 @@ function App() {
   const [showTranscript, setShowTranscript] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<DifficultyLevel>("junior");
+  const [speechSpeed, setSpeechSpeed] = useState<SpeechSpeed>("normal");
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -74,7 +83,7 @@ function App() {
   const speakText = (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
-    utterance.rate = 0.9;
+    utterance.rate = SPEED_SETTINGS[speechSpeed].rate;
     speechSynthesis.speak(utterance);
   };
 
@@ -169,6 +178,18 @@ function App() {
               onClick={() => setDifficulty(level)}
             >
               {DIFFICULTY_LABELS[level]}
+            </button>
+          ))}
+        </div>
+        <div className="speed-selector">
+          <span className="speed-label">読み上げ速度:</span>
+          {(Object.keys(SPEED_SETTINGS) as SpeechSpeed[]).map((speed) => (
+            <button
+              key={speed}
+              className={`speed-btn ${speechSpeed === speed ? "active" : ""}`}
+              onClick={() => setSpeechSpeed(speed)}
+            >
+              {SPEED_SETTINGS[speed].label}
             </button>
           ))}
         </div>
