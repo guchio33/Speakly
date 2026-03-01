@@ -51,8 +51,12 @@ if (!apiKey) {
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({
   model: "gemini-2.5-flash",
-  systemInstruction:
-    "You are a helpful English conversation partner. Help the user practice English conversation. Keep your responses concise and natural. Respond in English.",
+  systemInstruction: `You are a helpful English conversation partner. Help the user practice English conversation. Keep your responses concise and natural.
+
+IMPORTANT: Always respond in the following JSON format:
+{"english": "Your English response here", "japanese": "日本語訳をここに"}
+
+Only output valid JSON, nothing else.`,
 });
 
 app.get("/", (c) => {
@@ -90,9 +94,19 @@ app.post("/api/chat", async (c) => {
     }
 
     const result = await model.generateContent(message);
-    const reply = result.response.text();
+    const responseText = result.response.text();
 
-    return c.json({ reply });
+    // JSONをパース
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("Invalid response format");
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    const reply = parsed.english || "";
+    const translation = parsed.japanese || "";
+
+    return c.json({ reply, translation });
   } catch (error) {
     console.error("Chat error:", error);
     return c.json({ error: "Failed to process chat" }, 500);

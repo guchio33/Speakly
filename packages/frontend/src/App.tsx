@@ -4,6 +4,7 @@ import "./App.css";
 interface Message {
   role: "user" | "assistant";
   content: string;
+  translation?: string;
 }
 
 const API_BASE = "http://localhost:3001";
@@ -83,7 +84,10 @@ function App() {
       }
 
       // AIメッセージを追加
-      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: data.reply, translation: data.translation },
+      ]);
 
       // AIの返答を音声で読み上げ (Web Speech API)
       speakText(data.reply);
@@ -178,6 +182,9 @@ function App() {
                   >
                     {msg.content}
                   </p>
+                  {msg.translation && showTranscript && (
+                    <p className="translation">{msg.translation}</p>
+                  )}
                 </div>
               ))}
             </div>
